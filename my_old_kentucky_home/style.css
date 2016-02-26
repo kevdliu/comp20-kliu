@@ -1,0 +1,17 @@
+#music_video {
+    margin: 0 auto;
+	display: block;
+    border: 3px solid #33b5e5;
+    padding: 10px;
+}
+
+#lyrics {
+    margin: 0 auto;
+    width: 45%;
+    border: 3px solid #33b5e5;
+    padding: 10px;
+}
+
+h1 {
+	 text-align: center;
+}
