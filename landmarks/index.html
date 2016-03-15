@@ -55,7 +55,10 @@
 				// get data for other people and landmarks
 				getClassData(function(classData) {
 					for (i = 0; i < classData.people.length; i++) {
-						people.push(classData.people[i]);
+						// dont add self from server
+						if (classData.people[i].login != "PATRICK_PUGH") {
+							people.push(classData.people[i]);
+						}
 					}
 					
 					for (i = 0; i < classData.landmarks.length; i++) {
