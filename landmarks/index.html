@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		<title>Historic Landmarks</title>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?sensor=true"></script>
+		<link rel="stylesheet" href="geolocation_map_style.css" />
+		
+		<script>
+			var selfMarker = "https://maps.google.com/mapfiles/kml/shapes/arrow.png";
+			var peopleMarker = "https://maps.google.com/mapfiles/kml/shapes/toilets.png";
+			var landmarkMarker = "https://maps.google.com/mapfiles/kml/shapes/picnic.png";
+		
+			var request = new XMLHttpRequest();
+			
+			var people = new Array();
+			var infoWindow = new google.maps.InfoWindow(), marker, i;
+			var map;
+			var myOptions = {
+				zoom: 13,
+				center: people[0],
+				mapTypeId: google.maps.MapTypeId.ROADMAP
+			};
+			
+			function init(){
+				map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+				getMyLocation();	
+			}
+			
+			function getMyLocation() {
+				if (navigator.geolocation) { // the navigator.geolocation object is supported on your browser
+					navigator.geolocation.getCurrentPosition(function(position) {
+						var me = {
+							"lat": position.coords.latitude,
+							"lng": position.coords.longitude,
+							"login": "PATRICK_PUGH"
+						};
+						people.push(me);
+						
+						// pan to current location
+						map.panTo(me);
+						
+						renderMap();
+					});
+				} else {
+					alert("Geolocation is not supported by your web browser.  What a shame!");
+				}
+			}
+
+			function renderMap(){
+				// get data for other people
+				getClassData(function(classData) {
+					for (i = 0; i < classData.people.length; i++) {
+						people.push(classData.people[i]);
+					}
+					
+					addPeopleMarkers();
+				});
+			}
+			
+			function addPeopleMarkers() {
+				for(i = 0; i < people.length; i++) {
+					// create marker location
+					var position = new google.maps.LatLng(people[i].lat, people[i].lng);
+		
+					// create marker
+					marker = new google.maps.Marker({
+						position: position,
+						map: map,
+						icon: (i == 0 ? selfMarker : null),
+						title: people[i].login
+					});
+					
+					// open info window on click of marker
+					google.maps.event.addListener(marker, 'click', (function(marker, i) {
+						return function() {
+							infoWindow.setContent(people[i].login);
+							infoWindow.open(map, marker);
+						}
+					})(marker, i));
+				}
+			}
+			
+			function getClassData(callback) {
+				var http = new XMLHttpRequest();
+				var url = "https://defense-in-derpth.herokuapp.com/sendLocation";
+				var params = "login=PATRICK_PUGH&lat=" + people[0].lat + "&lng=" + people[0].lat;
+				http.open("POST", url, true);
+
+				//Send the proper header information along with the request
+				http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				http.setRequestHeader("Content-length", params.length);
+				http.setRequestHeader("Connection", "close");
+
+				http.onreadystatechange = function() {//Call a function when the state changes.
+					if(http.readyState == 4 && http.status == 200) {
+						var classData = JSON.parse(http.responseText);
+						callback(classData);
+					}
+				}
+				http.send(params);
+			}
+		</script>
+	</head>
+	
+	<body onload="init()">
+		<div id="map_canvas"></div>
+	</body>
+</html>
