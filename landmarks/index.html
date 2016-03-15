@@ -54,9 +54,6 @@
 			function renderMap(){
 				// get data for other people and landmarks
 				getClassData(function(classData) {
-				
-					console.log(classData);
-				
 					for (i = 0; i < classData.people.length; i++) {
 						people.push(classData.people[i]);
 					}
@@ -64,8 +61,8 @@
 					for (i = 0; i < classData.landmarks.length; i++) {
 						// generate custom landmark objects
 						var lm = {
-							"lat": classData.landmarks[i].geometry.coordinates[0],
-							"lng": classData.landmarks[i].geometry.coordinates[1],
+							"lat": classData.landmarks[i].geometry.coordinates[1],
+							"lng": classData.landmarks[i].geometry.coordinates[0],
 							"name": classData.landmarks[i].properties.Location_Name,
 							"details": classData.landmarks[i].properties.Details,
 							"distance": 0
@@ -167,10 +164,8 @@
 			function getClassData(callback) {
 				var http = new XMLHttpRequest();
 				var url = "https://defense-in-derpth.herokuapp.com/sendLocation";
-				var params = "login=PATRICK_PUGH&lat=" + people[0].lat + "&lng=" + people[0].lat; // first in the array is self
+				var params = "login=PATRICK_PUGH&lat=" + people[0].lat + "&lng=" + people[0].lng; // first in the array is self
 				http.open("POST", url, true);
-				
-				console.log(params);
 
 				//Send the proper header information along with the request
 				http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
