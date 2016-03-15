@@ -169,6 +169,8 @@
 				var url = "https://defense-in-derpth.herokuapp.com/sendLocation";
 				var params = "login=PATRICK_PUGH&lat=" + people[0].lat + "&lng=" + people[0].lat; // first in the array is self
 				http.open("POST", url, true);
+				
+				console.log(params);
 
 				//Send the proper header information along with the request
 				http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
