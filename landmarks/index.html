@@ -10,12 +10,12 @@
 		
 		<script>
 			var selfMarker = "https://maps.google.com/mapfiles/kml/shapes/arrow.png";
-			var peopleMarker = "https://maps.google.com/mapfiles/kml/shapes/toilets.png";
 			var landmarkMarker = "https://maps.google.com/mapfiles/kml/shapes/picnic.png";
 		
 			var request = new XMLHttpRequest();
 			
 			var people = new Array();
+			var landmarks = new Array();
 			var infoWindow = new google.maps.InfoWindow(), marker, i;
 			var map;
 			var myOptions = {
@@ -50,20 +50,45 @@
 			}
 
 			function renderMap(){
-				// get data for other people
+				// get data for other people and landmarks
 				getClassData(function(classData) {
 					for (i = 0; i < classData.people.length; i++) {
 						people.push(classData.people[i]);
 					}
 					
+					console.log(classData);
+					for (i = 0; i < classData.landmarks.length; i++) {
+						landmarks.push(classData.landmarks[i]);
+					}
+					
 					addPeopleMarkers();
+					addLandmarkMarkers();
 				});
 			}
 			
 			function addPeopleMarkers() {
+				var distance = 2; // only getting landmarks within a mile anway so 2 is enough for the search
+				var landmarkName = "";
+				var landmarkIndex = 0;
+					
 				for(i = 0; i < people.length; i++) {
 					// create marker location
 					var position = new google.maps.LatLng(people[i].lat, people[i].lng);
+					
+					// if marker is not self, calculate and display distance
+					if (i != 0) {
+						distance = getDistance(people[0].lat, people[0].lng, people[i].lat, people[i].lng);
+					} else {
+						// if marker is self, find and display closest landmark
+						for (x = 0; x < landmarks.length; x++) {
+							var dLandmark = getDistance(people[0].lat, people[0].lng, landmarks[x].lat, landmarks[x].lng);
+							if (dLandmark < distance) {
+								distance = dLandmark;
+								landmarkName = landmarks[x].properties.Location_Name;
+								landmarkIndex = x;
+							}
+						}
+					}
 		
 					// create marker
 					marker = new google.maps.Marker({
@@ -76,7 +101,47 @@
 					// open info window on click of marker
 					google.maps.event.addListener(marker, 'click', (function(marker, i) {
 						return function() {
-							infoWindow.setContent(people[i].login);
+							var content = (i == 0 ? ("Closest Landmark: " + landmarkName + "<br />" + "Distance: " + distance) : (people[i].login + "<br /> Distance: " + distance));
+							infoWindow.setContent(content);
+							infoWindow.open(map, marker);
+						}
+					})(marker, i));
+				}
+				
+				// after displaying all markers, display polyline between self and closest landmark
+				var flightPlanCoordinates = [
+					{lat: people[0].lat, lng: people[0].lng},
+					{lat: landmarks[landmarkIndex].lat, lng: landmarks[landmarkIndex].lng}
+				];
+				var flightPath = new google.maps.Polyline({
+					path: flightPlanCoordinates,
+					geodesic: true,
+					strokeColor: '#FF0000',
+					strokeOpacity: 1.0,
+					strokeWeight: 2
+				});
+
+				flightPath.setMap(map);
+			}
+			
+			function addLandmarkMarkers() {
+				for(i = 0; i < landmarks.length; i++) {
+					// create marker location
+					var position = new google.maps.LatLng(landmarks[i].lat, landmarks[i].lng);
+		
+					// create marker
+					marker = new google.maps.Marker({
+						position: position,
+						map: map,
+						icon: landmarkMarker,
+						title: landmarks[i].properties.Location_Name
+					});
+					
+					// open info window on click of marker
+					google.maps.event.addListener(marker, 'click', (function(marker, i) {
+						return function() {
+							var content = landmarks[i].properties.Location_Name + "<br />" + landmarks[i].properties.Details;
+							infoWindow.setContent(content);
 							infoWindow.open(map, marker);
 						}
 					})(marker, i));
@@ -101,6 +166,24 @@
 					}
 				}
 				http.send(params);
+			}
+			
+			// Credit to http://stackoverflow.com/questions/14560999/using-the-haversine-formula-in-javascript
+			function getDistance(latA, lngA, latB, lngB) {
+				var R = 6371; // Radius of the earth in km
+				var dLat = deg2rad(latB - latA);
+				var dLng = deg2rad(lngB - lngA); 
+				var a = 
+					Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+					Math.cos(deg2rad(latA)) * Math.cos(deg2rad(latB)) * 
+					Math.sin(dLng / 2) * Math.sin(dLng / 2); 
+				var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+				var d = R * c * 0.621371; // convert to miles
+				return d;
+			}
+
+			function deg2rad(deg) {
+				return deg * (Math.PI / 180);
 			}
 		</script>
 	</head>
